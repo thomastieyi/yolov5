@@ -1,0 +1,35 @@
+FROM ubuntu:latest
+
+# Install linux packages
+
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
+RUN echo "deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic main restricted universe multiverse" >> /etc/apt/sources.list
+RUN echo "deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-updates main restricted universe multiverse" >>/etc/apt/sources.list
+RUN echo "deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-backports main restricted universe multiverse" >>/etc/apt/sources.list
+RUN echo "deb http://mirrors.tuna.tsinghua.edu.cn/ubuntu/ bionic-security main restricted universe multiverse" >>/etc/apt/sources.list
+RUN apt update && apt install -y python3-pip zip htop screen libgl1-mesa-glx python-opencv 
+RUN alias python=python3
+
+RUN export https_proxy='http://115.25.41.49:2340';
+# Install python dependencies
+COPY requirements.txt .
+RUN python3 -m pip install --no-cache --upgrade pip
+RUN pip uninstall -y nvidia-tensorboard nvidia-tensorboard-plugin-dlprof
+RUN pip install --no-cache -r requirements.txt coremltools onnx onnxruntime tensorflow-cpu gsutil notebook
+RUN pip install --no-cache -U numpy Pillow
+RUN pip install --no-cache torch==1.10.0+cpu torchvision==0.11.1+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
+# RUN pip install --no-cache torch==1.10.0+cu113 torchvision==0.11.1+cu113 -f http://download.pytorch.org/whl/cu113/torch_stable.html
+
+# Create working directory
+RUN mkdir -p /usr/src/app
+WORKDIR /usr/src/app
+
+# Copy contents
+COPY . /usr/src/app
+RUN export https_proxy='http://115.25.41.49:2340';python3 detect.py;
+
+
+
+
+# Downloads to user config dir
+ADD http://ultralytics.com/assets/Arial.ttf /root/.config/Ultralytics/
